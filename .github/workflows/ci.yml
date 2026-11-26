@@ -1,0 +1,72 @@
+name: CI
+
+# Run on every push and pull request to main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# The workflow only needs to read the repository
+permissions:
+  contents: read
+
+# If you push again before the previous run finishes, cancel the old run
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (lint, test, build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm ci installs exactly what is in package-lock.json.
+      # Run from the root so npm workspaces install backend + frontend deps.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:backend
+
+      - name: Test
+        run: npm run test:backend
+
+      - name: Build
+        run: npm run build:backend
+
+  frontend:
+    name: Frontend (lint, test, build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:frontend
+
+      - name: Test
+        run: npm run test:frontend
+
+      - name: Build
+        run: npm run build:frontend
